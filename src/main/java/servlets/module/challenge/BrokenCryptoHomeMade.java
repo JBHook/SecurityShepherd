@@ -226,10 +226,12 @@ public class BrokenCryptoHomeMade extends HttpServlet {
                 "i18n.servlets.challenges.insecureCryptoStorage.insecureCryptoStorage", locale);
         out.print(getServletInfo());
         try {
-          String name = new String();
-          if (request.getParameter("name") != null) {
-            name = request.getParameter("name").toString();
-          }
+          // This value seeds the per-user key derivation below. It used to come straight from
+          // the "name" request parameter, so a caller could pass any other user's username here
+          // and get that user's personalised encrypted answers back in the response - an IDOR
+          // via the key-derivation input rather than the usual object-id parameter. Tying it to
+          // the caller's own authenticated session removes that choice entirely.
+          String name = ses.getAttribute("userName").toString();
           if (name.length() < 4) {
             htmlOutput = bundle.getString("insecureCryptoStorage.homemade.nameTooShort");
           } else {
