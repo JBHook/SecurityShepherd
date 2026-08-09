@@ -113,7 +113,11 @@ public class UrlAccess2Admin extends HttpServlet {
       log.debug("Outputting HTML");
       out.write(htmlOutput);
     } else {
-      log.error(levelName + " servlet accessed with no session");
+      // A denied request previously fell through with no explicit status, leaving the default
+      // 200 OK with an empty body - indistinguishable from a slow/odd success response rather
+      // than a clear rejection. Respond with 403 so the denial is unambiguous.
+      response.sendError(HttpServletResponse.SC_FORBIDDEN);
+      log.error(levelName + " servlet accessed without a valid admin session");
     }
   }
 }
