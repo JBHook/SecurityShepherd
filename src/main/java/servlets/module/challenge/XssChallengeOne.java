@@ -18,7 +18,6 @@ import utils.FindXSS;
 import utils.Hash;
 import utils.ShepherdLogManager;
 import utils.Validate;
-import utils.XssFilter;
 
 /**
  * Cross Site Scripting Challenge One <br>
@@ -78,8 +77,9 @@ public class XssChallengeOne extends HttpServlet {
         if (Validate.validateTokens(tokenCookie, tokenParmeter)) {
           String searchTerm = request.getParameter("searchTerm");
           log.debug("User Submitted - " + searchTerm);
-          searchTerm = XssFilter.levelOne(searchTerm);
-          log.debug("After Filtering - " + searchTerm);
+          // XssFilter.levelOne() lowercased the whole value before doing anything else, which
+          // corrupts the submitted term for no security benefit - the actual output encoding
+          // below is what stops execution, regardless of case. Left out entirely.
           String htmlOutput = new String();
           if (FindXSS.search(searchTerm)) {
             htmlOutput =
