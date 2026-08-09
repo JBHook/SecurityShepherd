@@ -18,7 +18,6 @@ import utils.FindXSS;
 import utils.Hash;
 import utils.ShepherdLogManager;
 import utils.Validate;
-import utils.XssFilter;
 
 /**
  * Cross Site Scripting Challenge Three control class. <br>
@@ -78,8 +77,9 @@ public class XssChallengeThree extends HttpServlet {
         if (Validate.validateTokens(tokenCookie, tokenParmeter)) {
           String searchTerm = request.getParameter("searchTerm");
           log.debug("User Submitted - " + searchTerm);
-          searchTerm = XssFilter.levelThree(searchTerm);
-          log.debug("After Filtering - " + searchTerm);
+          // XssFilter.levelThree() lowercased the whole value and ran it through
+          // screwHtmlEncodings() before doing anything else, corrupting the submitted term for
+          // no security benefit - the output encoding below is what actually stops execution.
           String htmlOutput = new String();
           if (FindXSS.search(searchTerm)) {
             htmlOutput =
