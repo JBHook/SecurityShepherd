@@ -128,11 +128,22 @@ public class BrokenCryptoHomeMade extends HttpServlet {
           log.debug(homemadebadanswers + "previous bad attempts");
           if (homemadebadanswers < 5) {
             String submittedSolution = request.getParameter("theSubmission");
-            String expectedSolution =
-                BrokenCryptoHomeMade.generateUserSolutionKeyOnly(
-                    BrokenCryptoHomeMade.challenges.get(4).get(1),
-                    ses.getAttribute("userName").toString());
-            if (submittedSolution.equals(expectedSolution)) {
+            String baseKey = BrokenCryptoHomeMade.challenges.get(4).get(1);
+            String expectedPlaintext = baseKey + BrokenCryptoHomeMade.getCurrentSalt();
+            // AES-GCM uses a random IV per encryption, so re-encrypting the same plaintext never
+            // reproduces the same ciphertext string - the submission must be decrypted and its
+            // plaintext compared, rather than comparing ciphertext strings directly.
+            boolean correctSubmission = false;
+            try {
+              byte[] key =
+                  createUserSpecificEncryptionKey(
+                      Validate.validateEncryptionKey(ses.getAttribute("userName").toString()));
+              correctSubmission =
+                  expectedPlaintext.equals(decryptUserSpecific(key, submittedSolution));
+            } catch (Exception e) {
+              log.debug("Could not decrypt submitted solution: " + e.toString());
+            }
+            if (correctSubmission) {
               log.debug("Correct Solution Submitted for 'This Challenge'. Returning Key");
               htmlOutput =
                   "<h2 class='title'>"
@@ -149,7 +160,7 @@ public class BrokenCryptoHomeMade extends HttpServlet {
                           (String) ses.getAttribute("userName"))
                       + "</a>";
             } else {
-              log.debug("Expected: " + expectedSolution);
+              log.debug("Expected plaintext: " + expectedPlaintext);
               log.debug("Got     : " + submittedSolution);
               htmlOutput =
                   "<h2 class='title'>"
